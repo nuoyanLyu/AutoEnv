@@ -3,7 +3,7 @@ import os
 from dataclasses import dataclass
 from loguru import logger
 from awm.gpt import GPTClient
-from awm.tools import tools_jsonl_load, tools_jsonl_save, tools_robust_json_loads
+from awm.tools import tools_jsonl_load, tools_jsonl_save, tools_robust_json_loads, load_api_keys
 from openai import OpenAI
 import numpy as np
 from tqdm import tqdm
@@ -60,7 +60,7 @@ class Config:
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir, exist_ok=True)
 
-        assert 'EMBEDDING_OPENAI_API_KEY' in os.environ, "EMBEDDING_OPENAI_API_KEY is required for embedding model"
+        # assert 'EMBEDDING_OPENAI_API_KEY' in os.environ, "EMBEDDING_OPENAI_API_KEY is required for embedding model"
         if 'EMBEDDING_OPENAI_BASE_URL' not in os.environ:
             logger.warning("EMBEDDING_OPENAI_BASE_URL is not set, using default OpenAI base url")
 
@@ -80,9 +80,13 @@ class ScenarioSelfInstruct:
         self.high_suitability: list[dict] = []
         self.medium_suitability: list[dict] = []
         self.low_suitability: list[dict] = []
+        # self.embedding_client = OpenAI(
+        #     api_key=os.environ.get('EMBEDDING_OPENAI_API_KEY'),
+        #     base_url=os.environ.get('EMBEDDING_OPENAI_BASE_URL', 'https://api.openai.com/v1'),
+        # )
         self.embedding_client = OpenAI(
-            api_key=os.environ.get('EMBEDDING_OPENAI_API_KEY'),
-            base_url=os.environ.get('EMBEDDING_OPENAI_BASE_URL', 'https://api.openai.com/v1'),
+            api_key=load_api_keys('dmx'),
+            base_url='https://www.dmxapi.cn/v1/'
         )
         self.embeddings: np.ndarray | None = None
         self.embedding_dim: int = 3072
@@ -130,7 +134,7 @@ class ScenarioSelfInstruct:
             requests.append({
                 "messages": messages,
                 "model": self.args.model,
-                "max_tokens": 1000,
+                "max_tokens": 3000,  # 1000 -> ensure GPT-5 output
             })
 
         responses = self.client.batch_chat_completion(requests, progress_bar=True)

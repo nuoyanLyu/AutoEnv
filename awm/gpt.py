@@ -8,6 +8,7 @@ from openai.types.chat import ChatCompletion
 from loguru import logger
 from tqdm.asyncio import tqdm
 
+from awm.tools import load_api_keys
 
 class ChatCompletionFallback(dict):
     def __init__(self, data: dict[str, any]):
@@ -33,7 +34,7 @@ class ChatCompletionFallback(dict):
 
 
 class GPTClient:
-    def __init__(self, provider: str = "azure", api_key: str | None = None, base_url: str | None = None, timeout: float = 600.0, max_retry_num: int = 3, retry_delay_seconds: float = 3, concurrency_limit: int = 64):
+    def __init__(self, provider: str = "dmx", api_key: str | None = None, base_url: str | None = None, timeout: float = 600.0, max_retry_num: int = 3, retry_delay_seconds: float = 3, concurrency_limit: int = 64):
 
         if os.environ.get('AWM_SYN_LLM_PROVIDER'):
             provider = os.environ.get('AWM_SYN_LLM_PROVIDER')
@@ -45,7 +46,8 @@ class GPTClient:
         else:
             self._override_model = None
 
-        assert provider in ['azure', 'openai'], "Invalid provider, must be 'azure' or 'openai'. For openai, you can set custom base url to adapt to your own inference service."
+        assert provider in ['azure', 'openai', 'deepseek', 'dmx'], \
+            "Invalid provider, must be 'azure', 'openai', 'deepseek', or 'dmx'. For openai, you can set custom base url to adapt to your own inference service."
 
         if provider == 'azure':
             self.endpoint = base_url or os.getenv("AZURE_ENDPOINT_URL")
@@ -53,6 +55,12 @@ class GPTClient:
         elif provider == 'openai':
             self.endpoint = base_url or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
             self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        elif provider == 'dmx':
+            self.endpoint = "https://www.dmxapi.cn/v1"
+            self.api_key = load_api_keys(provider)
+        elif provider == 'deepseek':
+            self.endpoint = "https://api.deepseek.com"
+            self.api_key = load_api_keys(provider)
         else:
             raise ValueError(f"Invalid provider: {provider}")
 
@@ -67,7 +75,7 @@ class GPTClient:
                 api_version='2025-01-01-preview',
                 timeout=self.timeout,
             )
-        elif provider == "openai":
+        elif provider in ["openai", "dmx", "deepseek"]:
             self._client = AsyncOpenAI(
                 api_key=self.api_key,
                 base_url=self.endpoint,

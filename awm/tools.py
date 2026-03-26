@@ -19,6 +19,8 @@ from mcp_agent.app import MCPApp
 from mcp_agent.agents.agent import Agent
 from mcp_agent.config import Settings, MCPSettings, MCPServerSettings, LoggerSettings
 
+import threading, itertools
+
 
 def dump_sqlite_to_string(db_path: str) -> str:
     from contextlib import closing
@@ -381,6 +383,30 @@ def normalize_azure_url(base_url: str) -> str:
         if not stripped.endswith("/openai/v1"):
             return stripped + "/openai/v1"
     return base_url
+
+
+class ThreadSafeCycle:
+    def __init__(self, iterable):
+        self._lock = threading.Lock()
+        self._iterator = itertools.cycle(iterable)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        with self._lock:
+            return next(self._iterator)
+
+
+def load_api_keys(api, api_files='api-keys.json'):
+    assert api in ['dmx', 'deepseek', 'openrouter']
+    try:
+        keys = json.load(open(api_files))[api]
+    except:
+        print('[ERROR] No `api-keys.json` file found!')
+        exit(1)
+    return next(ThreadSafeCycle(keys))
+
 
 
 def resolve_llm_config(

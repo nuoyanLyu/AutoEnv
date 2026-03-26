@@ -1,0 +1,32 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Scenario Generation",
+            "type": "debugpy",
+            "module": "awm.cli",
+            "args": [
+                "gen",
+                "scenario",
+                "--input_path", "outputs/seed_scenario10.jsonl",
+                "--output_path", "outputs/gen_scenario_20.jsonl",
+                "--target_count", "20",
+                "--num_parallel_requests", "1",
+                "--scenarios_per_request", "4",
+                "--diversity_check_batch", "16",
+                "--embedding_batch_size", "10",
+                "--max_per_category", "20",
+                "--max_stall_iterations", "5",
+                "--max_total_iterations", "100"
+            ],
+            "request": "launch",
+            // "program": "${file}",
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.env",
+            // "args": "${command:pickArgs}"
+        }
+    ]
+}
