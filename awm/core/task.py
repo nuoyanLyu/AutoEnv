@@ -12,10 +12,10 @@ import random
 class Config:
     input: str # scenario description file
     output: str
-    num_tasks: int = 10
+    num_tasks: int = 10 # task per scenario
     shuffle: bool = True
     limit: int | None = None
-    model: str = "your-llm-model-name"
+    model: str = "dmx"
     max_retry: int = 4  # Maximum number of retry attempts
 
     def pre_process(self):
