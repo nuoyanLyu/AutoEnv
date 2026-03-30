@@ -26,6 +26,7 @@ from awm.tools import (
     resolve_llm_config,
     sanitize_for_json,
     find_scenario_entry,
+    load_api_keys
 )
 
 
@@ -49,33 +50,35 @@ class Config:
     verifier_code_path: str | None = None
 
     def pre_process(self):
-        if self.mode == VerificationMode.sql:
-            # check llm environment variables
-            provider = os.environ.get("AWM_SYN_LLM_PROVIDER", "").lower()
-            if provider == "azure":
-                missing = []
-                if not os.environ.get("AZURE_ENDPOINT_URL"):
-                    missing.append("AZURE_ENDPOINT_URL")
-                if not os.environ.get("AZURE_OPENAI_API_KEY"):
-                    missing.append("AZURE_OPENAI_API_KEY")
-                if missing:
-                    raise ValueError(
-                        f"SQL verification mode requires Azure LLM config. Missing env vars: {', '.join(missing)}.\n"
-                        "Please set: AWM_SYN_LLM_PROVIDER=azure, AZURE_ENDPOINT_URL, AZURE_OPENAI_API_KEY"
-                    )
-            else:
-                if not os.environ.get("OPENAI_API_KEY") and not os.environ.get("OPENAI_BASE_URL"):
-                    raise ValueError(
-                        "SQL verification mode requires LLM config. Missing env vars.\n"
-                        "Please set either:\n"
-                        "  - AWM_SYN_LLM_PROVIDER=azure + AZURE_ENDPOINT_URL + AZURE_OPENAI_API_KEY\n"
-                        "  - OPENAI_API_KEY (+ optional OPENAI_BASE_URL)"
-                    )
-            if not os.environ.get("AWM_SYN_OVERRIDE_MODEL"):
-                raise ValueError(
-                    "SQL verification mode requires AWM_SYN_OVERRIDE_MODEL to be set.\n"
-                    "Example: export AWM_SYN_OVERRIDE_MODEL=gpt-5"
-                )
+        return
+        # 不check对应API调用的环境变量，回到调用的时候再去check
+        # # if self.mode == VerificationMode.sql:
+        #     # check llm environment variables
+        #     provider = os.environ.get("AWM_SYN_LLM_PROVIDER", "").lower()
+        #     if provider == "azure":
+        #         missing = []
+        #         if not os.environ.get("AZURE_ENDPOINT_URL"):
+        #             missing.append("AZURE_ENDPOINT_URL")
+        #         if not os.environ.get("AZURE_OPENAI_API_KEY"):
+        #             missing.append("AZURE_OPENAI_API_KEY")
+        #         if missing:
+        #             raise ValueError(
+        #                 f"SQL verification mode requires Azure LLM config. Missing env vars: {', '.join(missing)}.\n"
+        #                 "Please set: AWM_SYN_LLM_PROVIDER=azure, AZURE_ENDPOINT_URL, AZURE_OPENAI_API_KEY"
+        #             )
+        #     else:
+        #         if not os.environ.get("OPENAI_API_KEY") and not os.environ.get("OPENAI_BASE_URL"):
+        #             raise ValueError(
+        #                 "SQL verification mode requires LLM config. Missing env vars.\n"
+        #                 "Please set either:\n"
+        #                 "  - AWM_SYN_LLM_PROVIDER=azure + AZURE_ENDPOINT_URL + AZURE_OPENAI_API_KEY\n"
+        #                 "  - OPENAI_API_KEY (+ optional OPENAI_BASE_URL)"
+        #             )
+        #     if not os.environ.get("AWM_SYN_OVERRIDE_MODEL"):
+        #         raise ValueError(
+        #             "SQL verification mode requires AWM_SYN_OVERRIDE_MODEL to be set.\n"
+        #             "Example: export AWM_SYN_OVERRIDE_MODEL=gpt-5"
+        #         )
 
 
 
@@ -232,8 +235,8 @@ async def run_llm_judge(task, verifier_result, llm_base_url, llm_api_key, llm_mo
     if not llm_base_url or not llm_model:
         return "judge_error", {"error": "LLM endpoint not configured for sql verifier mode"}
 
-    llm_base_url = normalize_azure_url(llm_base_url)
-
+    # llm_base_url = normalize_azure_url(llm_base_url)
+    provider = os.environ.get("AWM_SYN_LLM_PROVIDER", "").lower()
     try:
         client = AsyncOpenAI(base_url=llm_base_url, api_key=llm_api_key or "EMPTY")
 

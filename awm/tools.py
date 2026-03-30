@@ -408,7 +408,6 @@ def load_api_keys(api, api_files='api-keys.json'):
     return next(ThreadSafeCycle(keys))
 
 
-
 def resolve_llm_config(
     api_url_override: str | None = None,
     model_override: str | None = None,
@@ -431,7 +430,12 @@ def resolve_llm_config(
         (api_url, api_key, model)
     """
     provider = os.environ.get("AWM_SYN_LLM_PROVIDER", "").lower()
-
+    # --- resolve API key ---
+    if provider == "azure":
+        api_key = os.environ.get("AZURE_OPENAI_API_KEY", "EMPTY")
+    else:
+        api_key = os.environ.get("OPENAI_API_KEY", "EMPTY")
+    
     # --- resolve base URL ---
     if api_url_override:
         api_url = normalize_azure_url(api_url_override)
@@ -443,16 +447,16 @@ def resolve_llm_config(
                 "Please set: AWM_SYN_LLM_PROVIDER, AZURE_ENDPOINT_URL, AZURE_OPENAI_API_KEY"
             )
         api_url = normalize_azure_url(azure_endpoint)
+    elif provider == 'dmx':
+        api_url = "https://www.dmxapi.cn/v1"
+        api_key = load_api_keys(provider)
+    elif provider == 'deepseek':
+        api_url = "https://api.deepseek.com"
+        api_key = load_api_keys(provider)
     elif os.environ.get("OPENAI_BASE_URL"):
         api_url = os.environ["OPENAI_BASE_URL"]
     else:
         raise ValueError("No LLM API URL provided.")
-
-    # --- resolve API key ---
-    if provider == "azure":
-        api_key = os.environ.get("AZURE_OPENAI_API_KEY", "EMPTY")
-    else:
-        api_key = os.environ.get("OPENAI_API_KEY", "EMPTY")
 
     # --- resolve model ---
     model = model_override or os.environ.get("AWM_SYN_OVERRIDE_MODEL", "")

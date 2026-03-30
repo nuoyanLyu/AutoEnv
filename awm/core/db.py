@@ -73,6 +73,7 @@ def create_sqlite_database(scenario_name: str, db_schema: dict, db_dir: str) -> 
         os.remove(db_path)
         logger.debug(f"Removed existing database: {db_path}")
     
+    # 用的是sqlite3包，直接操作本地Python文件执行数据库操作
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
@@ -85,6 +86,8 @@ def create_sqlite_database(scenario_name: str, db_schema: dict, db_dir: str) -> 
     for table in db_schema.get("tables", []):
         table_name = table.get('name', 'unknown')
         try:
+            # 尝试执行各种操作，查看数据库会不会结果有变化
+            # 这里的核心就是创建表格，看一下是不是不会报错
             cursor.execute(table["ddl"])
             
             for index_sql in table.get("indexes", []):
